@@ -124,19 +124,24 @@ Remember to maintain this exact format with these exact labels.
 
 def human_review(results):
     """
-    Presents flagged compliance results for human review on the command line.
-    The reviewer is prompted to confirm or override the AI answer.
-    Unflagged items are automatically approved.
+    Presents compliance results for human review on the command line.
+    The reviewer can choose to review all decisions or just flagged items.
     """
-    print("Human Review Required:")
+    while True:
+        review_choice = input("\nWould you like to review all AI decisions or just the flagged ones? (Enter 'all' or 'flagged'): ").strip().lower()
+        if review_choice in ['all', 'flagged']:
+            break
+        print("Invalid input. Please enter 'all' or 'flagged'.")
+
+    print("\nHuman Review Required:")
     for result in results:
-        # Require review if the result was flagged or if an error occurred.
-        if result.get("Flagged", False):
-            print(f"\nFlagged Policy: {result['Policy']}")
+        should_review = (review_choice == 'all') or (review_choice == 'flagged' and result.get("Flagged", False))
+        
+        if should_review:
+            print(f"\nPolicy: {result['Policy']}")
             print(f"AI Answer: {result.get('Answer', 'Error')}")
             print(f"Explanation: {result.get('Explanation', 'N/A')}")
             print(f"Highlighted Text: {result.get('Highlighted Text', 'N/A')}")
-            # Continue prompting until a valid input is provided.
             while True:
                 approved_answer = input(
                     f"Do you approve the AI's answer '{result.get('Answer', 'Error')}'? (Enter Yes, No, or Not Applicable): "
@@ -147,8 +152,8 @@ def human_review(results):
                 else:
                     print("Invalid input. Please enter 'Yes', 'No', or 'Not Applicable'.")
         else:
-            # Automatically approve unflagged results.
-            result["Human Approved Answer"] = result.get("Answer", "Error")
+            # For unreviewed items, keep the original AI answer
+            result["Human Approved Answer"] = result["Answer"]
     return results
 
 def main():
