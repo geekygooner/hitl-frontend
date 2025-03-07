@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Review</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Review</h1>
+        {% if error %}
+            <p class="red-text">{{ error }}</p>
+        {% endif %}
+        <form method="post" action="/review">
+            {% for i, result in enumerate(results) %}
+                <div class="card">
+                    <div class="card-content">
+                        <span class="card-title">Policy: {{ result.Policy }}</span>
+                        <p>Question: Does the document comply with this policy?</p>
+                        <p>AI Answer: {{ result.Answer }}</p>
+                        <p>Highlighted Text: {{ result['Highlighted Text'] }}</p>
+                        <p>Explanation: {{ result.Explanation }}</p>
+                        <div class="input-field">
+                            <select name="answer_{{ i }}" required>
+                                <option value="" disabled selected>Choose your answer</option>
+                                <option value="Yes">Yes</option>
+                                <option value="No">No</option>
+                                <option value="Not Applicable">Not Applicable</option>
+                            </select>
+                            <label>Your Answer</label>
+                        </div>
+                        <div class="input-field">
+                            <textarea name="comment_{{ i }}" class="materialize-textarea"></textarea>
+                            <label>Comments (optional)</label>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+            <button class="btn waves-effect waves-light" type="submit">Submit
+                <!-- <i class="material-icons right">send</i> -->
+            </button>
+        </form>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var elems = document.querySelectorAll('select');
+            var instances = M.FormSelect.init(elems);
+        });
+    </script>
+</body>
+</html> 
