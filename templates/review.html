@@ -17,10 +17,10 @@
                 <div class="card">
                     <div class="card-content">
                         <span class="card-title">Policy: {{ result.Policy }}</span>
-                        <p>AI Answer: {{ result.Answer }}</p>
-                        <p>Explanation: {{ result.Explanation }}</p>
-                        <p>Highlighted Text: {{ result['Highlighted Text'] }}</p>
                         <p>Question: Does the document comply with this policy?</p>
+                        <p>AI Answer: {{ result.Answer }}</p>
+                        <p>Highlighted Text: {{ result['Highlighted Text'] }}</p>
+                        <p>Explanation: {{ result.Explanation }}</p>
                         <div class="input-field">
                             <select name="answer_{{ i }}" required>
                                 <option value="" disabled selected>Choose your answer</option>
