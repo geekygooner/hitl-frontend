@@ -73,7 +73,7 @@ The repository is organized as follows:
 |--------------------|-----------------------------------------------------------------------|
 | `app.py`           | Main application file handling routing and server configurations.     |
 | `main.py`          | Contains model that analyzes text for policy compliance. Sample text  |
-                     | and policies are hardcoded in this script.                            |
+|                    | and policies are hardcoded in this script.                            |
 | `openrouter.py`    | Used to test connection to openrouter.ai                              |
 | `templates/`       | Contains the HTML templates used for the web interface.               |
 | `requirements.txt` | Lists all Python dependencies needed to run the project.              |
