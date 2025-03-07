@@ -1,4 +1,5 @@
 # hitl-frontend
+This project was created to explore how to accept human approval on an AI model's decisions.
 
 hitl-frontend is a web-based interface designed to support human-in-the-loop interactions. The project leverages Python and HTML to create an interactive environment that can integrate with backend systems, making it easier for users to engage with complex workflows.
 
@@ -71,7 +72,8 @@ The repository is organized as follows:
 | File/Directory     | Description                                                           |
 |--------------------|-----------------------------------------------------------------------|
 | `app.py`           | Main application file handling routing and server configurations.     |
-| `main.py`          | Contains model that analyzes text for policy compliance.              |
+| `main.py`          | Contains model that analyzes text for policy compliance. Sample text  |
+                     | and policies are hardcoded in this script.                            |
 | `openrouter.py`    | Used to test connection to openrouter.ai                              |
 | `templates/`       | Contains the HTML templates used for the web interface.               |
 | `requirements.txt` | Lists all Python dependencies needed to run the project.              |
