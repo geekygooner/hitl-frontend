@@ -1,3 +1,4 @@
+#This file was created to test the openrouter api
 from openai import OpenAI
 import os
 import dotenv
