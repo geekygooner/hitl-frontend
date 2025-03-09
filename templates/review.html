@@ -5,48 +5,183 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Review</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <style>
+        .review-container {
+            display: flex;
+            height: 100vh;
+        }
+        .review-panel {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            max-width: 50%;
+        }
+        .document-panel {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            border-left: 1px solid #ccc;
+            background-color: #f9f9f9;
+        }
+        .highlighted-text {
+            background-color: #ffeb3b;
+            padding: 2px 0;
+        }
+        .policy-card {
+            margin-bottom: 20px;
+        }
+        .sticky-header {
+            position: sticky;
+            top: 0;
+            background-color: white;
+            padding: 10px 0;
+            z-index: 10;
+            border-bottom: 1px solid #eee;
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Review</h1>
-        {% if error %}
-            <p class="red-text">{{ error }}</p>
-        {% endif %}
-        <form method="post" action="/review">
-            {% for i, result in enumerate(results) %}
-                <div class="card">
-                    <div class="card-content">
-                        <span class="card-title">Policy: {{ result.Policy }}</span>
-                        <p>Question: Does the document comply with this policy?</p>
-                        <p>AI Answer: {{ result.Answer }}</p>
-                        <p>Highlighted Text: {{ result['Highlighted Text'] }}</p>
-                        <p>Explanation: {{ result.Explanation }}</p>
-                        <div class="input-field">
-                            <select name="answer_{{ i }}" required>
-                                <option value="" disabled selected>Choose your answer</option>
-                                <option value="Yes">Yes</option>
-                                <option value="No">No</option>
-                                <option value="Not Applicable">Not Applicable</option>
-                            </select>
-                            <label>Your Answer</label>
-                        </div>
-                        <div class="input-field">
-                            <textarea name="comment_{{ i }}" class="materialize-textarea"></textarea>
-                            <label>Comments (optional)</label>
+    <div class="review-container">
+        <!-- Left side: AI analysis review panel -->
+        <div class="review-panel">
+            <div class="sticky-header">
+                <h4>AI Compliance Review</h4>
+                {% if error %}
+                    <p class="red-text">{{ error }}</p>
+                {% endif %}
+            </div>
+            <form method="post" action="/review">
+                {% for i, result in enumerate(results) %}
+                    <div id="policy-card-{{ i }}" class="card policy-card">
+                        <div class="card-content">
+                            <span class="card-title">Policy: {{ result.Policy }}</span>
+                            <p>Question: Does the document comply with this policy?</p>
+                            <p>AI Answer: {{ result.Answer }}</p>
+                            <p>Highlighted Text: 
+                                <span class="highlighted-text" data-text="{{ result['Highlighted Text'] }}">
+                                    {{ result['Highlighted Text'] }}
+                                </span>
+                                <a href="#" class="view-in-doc" data-highlight="{{ result['Highlighted Text'] }}">View in document</a>
+                            </p>
+                            <p>Explanation: {{ result.Explanation }}</p>
+                            <div class="input-field">
+                                <select name="answer_{{ i }}" required>
+                                    <option value="" disabled selected>Choose your answer</option>
+                                    <option value="Yes">Yes</option>
+                                    <option value="No">No</option>
+                                    <option value="Not Applicable">Not Applicable</option>
+                                </select>
+                                <label>Your Answer</label>
+                            </div>
+                            <div class="input-field">
+                                <textarea name="comment_{{ i }}" class="materialize-textarea"></textarea>
+                                <label>Comments (optional)</label>
+                            </div>
                         </div>
                     </div>
-                </div>
-            {% endfor %}
-            <button class="btn waves-effect waves-light" type="submit">Submit
-                <!-- <i class="material-icons right">send</i> -->
-            </button>
-        </form>
+                {% endfor %}
+                <button class="btn waves-effect waves-light" type="submit">Submit</button>
+            </form>
+        </div>
+
+        <!-- Right side: Document view panel -->
+        <div class="document-panel">
+            <div class="sticky-header">
+                <h4>Document Content</h4>
+            </div>
+            <div id="document-content">
+                {% for paragraph in full_document.split('\n') %}
+                    <p>{{ paragraph }}</p>
+                {% endfor %}
+            </div>
+        </div>
     </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Materialize components
             var elems = document.querySelectorAll('select');
             var instances = M.FormSelect.init(elems);
+            
+            // Highlight text in the document when "View in document" is clicked
+            document.querySelectorAll('.view-in-doc').forEach(function(link) {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Get the text to highlight
+                    const textToHighlight = this.getAttribute('data-highlight');
+                    if (!textToHighlight) return;
+                    
+                    // Get the document content element
+                    const docContent = document.getElementById('document-content');
+                    
+                    // Remove any existing highlights
+                    const existingHighlights = docContent.querySelectorAll('.doc-highlight');
+                    existingHighlights.forEach(el => {
+                        const parent = el.parentNode;
+                        parent.replaceChild(document.createTextNode(el.textContent), el);
+                        parent.normalize();
+                    });
+                    
+                    // Find and highlight the text in the document
+                    highlightTextInDocument(docContent, textToHighlight);
+                });
+            });
+            
+            function highlightTextInDocument(container, text) {
+                // This is a simple text search - we'll look through all text nodes
+                // in the document and highlight matches
+                const walker = document.createTreeWalker(
+                    container,
+                    NodeFilter.SHOW_TEXT,
+                    null,
+                    false
+                );
+                
+                let textNode;
+                let found = false;
+                
+                while (textNode = walker.nextNode()) {
+                    const content = textNode.textContent;
+                    const index = content.indexOf(text);
+                    
+                    if (index >= 0) {
+                        found = true;
+                        
+                        // Split the text node into three parts: before, highlight, after
+                        const before = content.substring(0, index);
+                        const after = content.substring(index + text.length);
+                        
+                        // Create new nodes
+                        const beforeNode = document.createTextNode(before);
+                        const highlightNode = document.createElement('span');
+                        highlightNode.className = 'doc-highlight highlighted-text';
+                        highlightNode.textContent = text;
+                        const afterNode = document.createTextNode(after);
+                        
+                        // Replace the original node with these three nodes
+                        const parent = textNode.parentNode;
+                        parent.insertBefore(beforeNode, textNode);
+                        parent.insertBefore(highlightNode, textNode);
+                        parent.insertBefore(afterNode, textNode);
+                        parent.removeChild(textNode);
+                        
+                        // Scroll to the highlighted text
+                        highlightNode.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'center'
+                        });
+                        
+                        break;
+                    }
+                }
+                
+                if (!found) {
+                    console.log('Text not found in document:', text);
+                    alert('The highlighted text could not be found in the document. This may happen if the text contains special formatting or if the AI model paraphrased the text.');
+                }
+            }
         });
     </script>
 </body>

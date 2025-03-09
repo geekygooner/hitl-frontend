@@ -27,9 +27,9 @@ headers = {
 document_path = "/Users/kiraningale/Documents/Code/hitl-frontend/sample_project.docx"
 # Define policies for compliance checking
 policies = {
-    "Policy 1": "All project plans must include a risk assessment.",
+    "Policy 1": "Projects must have stakeholder approval documented.",
     "Policy 2": "Data storage must comply with GDPR regulations.",
-    "Policy 3": "Projects must have stakeholder approval documented."
+    "Policy 3": "All project plans must include a risk assessment."
 }
 
 def read_word_document(document_path):
@@ -54,7 +54,10 @@ def check_compliance(document, policies):
     highlighted text, and an automatic flag if needed.
     """
     results = []
-
+    
+    # Store the full document content for display in the UI
+    full_document_content = document
+    
     for policy_name, policy_text in policies.items():
         prompt = f"""
 Please analyze the following document against the given policy and provide your response in the exact format specified below:
@@ -100,6 +103,12 @@ Remember to maintain this exact format with these exact labels.
             answer = answer_line.split(":", 1)[1].strip()
             explanation = explanation_line.split(":", 1)[1].strip()
             highlighted_text = highlighted_line.split(":", 1)[1].strip()
+            # Remove surrounding quotation marks if present
+            if highlighted_text.startswith('"') and highlighted_text.endswith('"'):
+                highlighted_text = highlighted_text[1:-1].strip()
+            # Also handle single quotes
+            elif highlighted_text.startswith("'") and highlighted_text.endswith("'"):
+                highlighted_text = highlighted_text[1:-1].strip()
 
             # Validate the answer format
             if answer not in ["Yes", "No", "Not Applicable"]:
@@ -127,7 +136,8 @@ Remember to maintain this exact format with these exact labels.
             })
             continue
 
-    return results
+    # Return both results and the full document content
+    return results, full_document_content
 
 def human_review(results):
     """
@@ -171,7 +181,7 @@ def main(document_path):
         return
     
     # Step 1: AI checks document compliance against each policy.
-    compliance_results = check_compliance(project_document, policies)
+    compliance_results, full_document_content = check_compliance(project_document, policies)
     
     # Step 2: Human-in-the-loop review for flagged items.
     final_results = human_review(compliance_results)

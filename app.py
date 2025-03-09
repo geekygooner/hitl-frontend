@@ -1,7 +1,7 @@
 import os
 import socket
 from flask import Flask, render_template, request, redirect, url_for, session, send_file
-from main import check_compliance, policies, document_path  # Import your functions and data
+from main import check_compliance, policies, document_path, read_word_document  # Import your functions and data
 import io  # Import the io module
 
 app = Flask(__name__)
@@ -19,15 +19,23 @@ def find_available_port():
 def review_choice():
     if request.method == 'POST':
         session['review_all'] = request.form.get('review_choice') == 'all'
-        results = check_compliance(document_path, policies)
+        
+        # Read the document
+        document_content = read_word_document(document_path)
+        
+        # Get compliance results and full document content
+        results, full_document = check_compliance(document_content, policies)
         session['results'] = results
+        session['full_document'] = full_document
         return redirect(url_for('review'))
     return render_template('review_choice.html')
 
 @app.route('/review', methods=['GET', 'POST'])
 def review():
     results = session.get('results')
-    if results is None:
+    full_document = session.get('full_document')
+    
+    if results is None or full_document is None:
         return redirect(url_for('review_choice'))
 
     if request.method == 'POST':
@@ -60,7 +68,12 @@ def review():
 
     # Filter results based on review choice
     review_results = [result for result in results if session['review_all'] or result.get('Flagged', False)]
-    return render_template('review.html', results=review_results, review_all=session['review_all'], error=None, enumerate=enumerate)
+    return render_template('review.html', 
+                          results=review_results, 
+                          review_all=session['review_all'], 
+                          error=None, 
+                          enumerate=enumerate,
+                          full_document=full_document)
 
 @app.route('/results')
 def results():
