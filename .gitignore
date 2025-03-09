@@ -1,3 +1,5 @@
 openrouterkey.txt
 .env
 /__pycache__
+/uploads
+/__pycache__

@@ -2,7 +2,9 @@ import os
 import socket
 from flask import Flask, render_template, request, redirect, url_for, session, send_file
 from main import check_compliance, policies, document_path, read_word_document  # Import your functions and data
-import io  # Import the io module
+import io
+from docx import * # Import the io module
+#from bayoo_docx import Document
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)  # Required for using session
@@ -89,27 +91,96 @@ def download_report():
     if results is None:
         return redirect(url_for('review_choice'))
 
-    report = generate_report(results)
-    # Use BytesIO to create an in-memory binary file
-    report_file = io.BytesIO()
-    report_file.write(report.encode('utf-8'))  # Encode the string to bytes
-    report_file.seek(0)  # Reset the file pointer to the beginning
-    return send_file(report_file, as_attachment=True, download_name='compliance_report.txt', mimetype='text/plain')
+    try:
+        # Load the original document
+        doc = Document(document_path)
+        
+        # Iterate through results and add comments
+        for result in results:
+            highlighted_text = result.get('Highlighted Text')
+            explanation = result.get('Explanation')
 
-def generate_report(results):
-    report = "Final Compliance Report:\n"
-    for result in results:
-        report += f"Policy: {result['Policy']}\n"
-        if "Error" in result:
-            report += f"  Error: {result['Error']}\n"
-        else:
-            report += f"  AI Answer: {result.get('Answer', 'N/A')}\n"
-            report += f"  Explanation: {result.get('Explanation', 'N/A')}\n"
-            report += f"  Highlighted Text: {result.get('Highlighted Text', 'N/A')}\n"
-            report += f"  Human Approved Answer: {result.get('Human Approved Answer', 'N/A')}\n"
-            report += f"  Comment: {result.get('Comment', 'N/A')}\n"
-        report += "-" * 40 + "\n"
-    return report
+            if highlighted_text and explanation:
+                try:
+                    add_comment_to_highlighted_text(doc, highlighted_text, explanation)
+                except Exception as e:
+                    print(f"Error adding comment for text '{highlighted_text}': {e}")
+                    # Continue with other comments even if one fails
+
+        # Save the modified document to an in-memory file
+        output_file = io.BytesIO()
+        doc.save(output_file)
+        output_file.seek(0)
+
+        # Generate the output filename
+        original_filename = os.path.basename(document_path)
+        output_filename = f"{os.path.splitext(original_filename)[0]}-output.docx"
+
+        return send_file(output_file, as_attachment=True, download_name=output_filename, mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+    
+    except Exception as e:
+        print(f"Error generating document with comments: {e}")
+        return f"Error generating document: {str(e)}", 500
+
+def add_comment_to_highlighted_text(doc, highlighted_text, explanation):
+    """
+    Adds a comment to the first occurrence of highlighted_text in the document.
+    Uses run-level commenting instead of paragraph-level.
+    """
+    for paragraph in doc.paragraphs:
+        if highlighted_text in paragraph.text:
+            # Find the run that contains the highlighted text
+            text_index = paragraph.text.find(highlighted_text)
+            current_index = 0
+            comment_added = False
+            
+            # Try to add comment at run level first
+            for i, run in enumerate(paragraph.runs):
+                run_length = len(run.text)
+                run_end_index = current_index + run_length
+                
+                # Check if this run contains any part of the highlighted text
+                if (current_index <= text_index < run_end_index or 
+                    text_index <= current_index < text_index + len(highlighted_text)):
+                    # Add comment to this run - try different parameter combinations based on error messages
+                    try:
+                        # First attempt: simplest form with just the text
+                        run.add_comment(explanation)
+                        comment_added = True
+                        print(f"Added comment to run with simple parameters")
+                        break
+                    except Exception as e1:
+                        print(f"Simple comment failed: {e1}")
+                        try:
+                            # Second attempt: with author and initials
+                            run.add_comment(text=explanation, author="AI", initials="AI")
+                            comment_added = True
+                            print(f"Added comment to run with named parameters")
+                            break
+                        except Exception as e2:
+                            print(f"Named parameters failed: {e2}")
+                            try:
+                                # Third attempt: with comment_part parameter (from error message)
+                                run.add_comment(comment_part=explanation, author="AI", initials="AI")
+                                comment_added = True
+                                print(f"Added comment with comment_part parameter")
+                                break
+                            except Exception as e3:
+                                print(f"comment_part parameter failed: {e3}")
+                                # Continue to next run
+                
+                current_index = run_end_index
+            
+            # Fallback: If no run-level comment was added, try document-level comment
+            if not comment_added:
+                try:
+                    # Add a document-level comment
+                    doc.add_comment(explanation, author="AI", initials="AI")
+                    print(f"Added document-level comment for: {highlighted_text}")
+                except Exception as e:
+                    print(f"Failed to add document-level comment: {e}")
+            
+            break  # Only comment the first occurrence of the highlighted text in the document
 
 if __name__ == '__main__':
     #port = find_available_port()
