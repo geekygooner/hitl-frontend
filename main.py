@@ -3,6 +3,7 @@ import os
 import requests
 import dotenv
 from openai import OpenAI
+import docx  # Add python-docx import
 dotenv.load_dotenv()
 #Connect to your llm api
 # Load environment variables
@@ -23,7 +24,7 @@ headers = {
 }
 
 
-
+document_path = "/Users/kiraningale/Documents/Code/hitl-frontend/sample_project.docx"
 # Define policies for compliance checking
 policies = {
     "Policy 1": "All project plans must include a risk assessment.",
@@ -31,13 +32,19 @@ policies = {
     "Policy 3": "Projects must have stakeholder approval documented."
 }
 
-# Sample project document text
-project_document = """
-The project plan includes detailed timelines and resource allocation.
-However, no explicit risk assessment is mentioned.
-Data storage complies with GDPR regulations.
-Stakeholder approvals are documented in Appendix B.
-"""
+def read_word_document(document_path):
+    """
+    Read content from a Word document and return it as a string.
+    """
+    try:
+        doc = docx.Document(document_path)
+        full_text = []
+        for para in doc.paragraphs:
+            full_text.append(para.text)
+        return "\n".join(full_text)
+    except Exception as e:
+        print(f"Error reading Word document: {str(e)}")
+        return ""
 
 def check_compliance(document, policies):
     """
@@ -156,7 +163,13 @@ def human_review(results):
             result["Human Approved Answer"] = result["Answer"]
     return results
 
-def main():
+def main(document_path):
+    # Step 0: Read the Word document
+    project_document = read_word_document(document_path)
+    if not project_document:
+        print("Failed to read document or document is empty. Exiting.")
+        return
+    
     # Step 1: AI checks document compliance against each policy.
     compliance_results = check_compliance(project_document, policies)
     
@@ -177,4 +190,6 @@ def main():
         print("-" * 40)
 
 if __name__ == "__main__":
-    main()
+    # Get document path from user input
+    
+    main(document_path)

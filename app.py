@@ -1,7 +1,7 @@
 import os
 import socket
 from flask import Flask, render_template, request, redirect, url_for, session, send_file
-from main import check_compliance, policies, project_document  # Import your functions and data
+from main import check_compliance, policies, document_path  # Import your functions and data
 import io  # Import the io module
 
 app = Flask(__name__)
@@ -19,7 +19,7 @@ def find_available_port():
 def review_choice():
     if request.method == 'POST':
         session['review_all'] = request.form.get('review_choice') == 'all'
-        results = check_compliance(project_document, policies)
+        results = check_compliance(document_path, policies)
         session['results'] = results
         return redirect(url_for('review'))
     return render_template('review_choice.html')
