@@ -4,7 +4,7 @@ from flask import Flask, render_template, request, redirect, url_for, session, s
 from main import check_compliance, policies, document_path, read_word_document  # Import your functions and data
 import io
 from docx import * # Import the io module
-#from bayoo_docx import Document
+from docx import Document
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)  # Required for using session
