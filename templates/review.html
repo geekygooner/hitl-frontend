@@ -63,7 +63,11 @@
                                 </span>
                                 <a href="#" class="view-in-doc" data-highlight="{{ result['Highlighted Text'] }}">View in document</a>
                             </p>
-                            <p>Explanation: {{ result.Explanation }}</p>
+                            <div class="input-field">
+                                <label for="explanation_{{ i }}" class="active">Explanation (editable):</label>
+                                <small class="grey-text">You can edit the AI-provided explanation below if needed.</small>
+                                <textarea name="explanation_{{ i }}" id="explanation_{{ i }}" class="materialize-textarea">{{ result.Explanation }}</textarea>
+                            </div>
                             <div class="input-field">
                                 <select name="answer_{{ i }}" required>
                                     <option value="" disabled selected>Choose your answer</option>
@@ -101,8 +105,11 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Initialize Materialize components
-            var elems = document.querySelectorAll('select');
-            var instances = M.FormSelect.init(elems);
+            var selectElems = document.querySelectorAll('select');
+            var selectInstances = M.FormSelect.init(selectElems);
+            
+            var textareaElems = document.querySelectorAll('.materialize-textarea');
+            var textareaInstances = M.textareaAutoResize.init(textareaElems);
             
             // Highlight text in the document when "View in document" is clicked
             document.querySelectorAll('.view-in-doc').forEach(function(link) {

@@ -4,7 +4,7 @@ from flask import Flask, render_template, request, redirect, url_for, session, s
 from main import check_compliance, policies, document_path, read_word_document  # Import your functions and data
 import io
 from docx import * # Import the io module
-#from bayoo_docx import Document
+from docx import Document
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)  # Required for using session
@@ -43,22 +43,26 @@ def review():
     if request.method == 'POST':
         human_approved_answers = {}
         comments = {}
+        edited_explanations = {}
         all_answered = True
         for i, result in enumerate(results):
             if session['review_all'] or result.get('Flagged', False):
                 answer = request.form.get(f'answer_{i}')
                 comment = request.form.get(f'comment_{i}', '')  # Default to empty string if no comment
+                explanation = request.form.get(f'explanation_{i}', result.get('Explanation', ''))  # Get edited explanation
                 if not answer:
                     all_answered = False
                     break
                 human_approved_answers[i] = answer
                 comments[i] = comment
+                edited_explanations[i] = explanation
 
         if all_answered:
             for i, result in enumerate(results):
                 if i in human_approved_answers:
                     result['Human Approved Answer'] = human_approved_answers[i]
                     result['Comment'] = comments[i]
+                    result['Explanation'] = edited_explanations[i]  # Update with edited explanation
                 else:
                     result['Human Approved Answer'] = result['Answer']
                     result['Comment'] = ''  # No comment if not reviewed
