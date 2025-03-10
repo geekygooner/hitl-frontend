@@ -3,3 +3,4 @@ openrouterkey.txt
 /__pycache__
 /uploads
 /__pycache__
+*.pyc
