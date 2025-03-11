@@ -43,22 +43,26 @@ def review():
     if request.method == 'POST':
         human_approved_answers = {}
         comments = {}
+        explanations = {}
         all_answered = True
         for i, result in enumerate(results):
             if session['review_all'] or result.get('Flagged', False):
                 answer = request.form.get(f'answer_{i}')
                 comment = request.form.get(f'comment_{i}', '')  # Default to empty string if no comment
+                explanation = request.form.get(f'explanation_{i}', result.get('Explanation', ''))  # Get edited explanation
                 if not answer:
                     all_answered = False
                     break
                 human_approved_answers[i] = answer
                 comments[i] = comment
+                explanations[i] = explanation
 
         if all_answered:
             for i, result in enumerate(results):
                 if i in human_approved_answers:
                     result['Human Approved Answer'] = human_approved_answers[i]
                     result['Comment'] = comments[i]
+                    result['Explanation'] = explanations[i]  # Update with the edited explanation
                 else:
                     result['Human Approved Answer'] = result['Answer']
                     result['Comment'] = ''  # No comment if not reviewed
@@ -98,11 +102,18 @@ def download_report():
         # Iterate through results and add comments
         for result in results:
             highlighted_text = result.get('Highlighted Text')
-            explanation = result.get('Explanation')
+            explanation = result.get('Explanation')  # This will now be the edited explanation
+            comment = result.get('Comment', '')
+            
+            # If there's a human reviewer comment, append it to the explanation
+            if comment:
+                explanation_with_comment = f"{explanation}\n\nReviewer comment: {comment}"
+            else:
+                explanation_with_comment = explanation
 
-            if highlighted_text and explanation:
+            if highlighted_text and explanation_with_comment:
                 try:
-                    add_comment_to_highlighted_text(doc, highlighted_text, explanation)
+                    add_comment_to_highlighted_text(doc, highlighted_text, explanation_with_comment)
                 except Exception as e:
                     print(f"Error adding comment for text '{highlighted_text}': {e}")
                     # Continue with other comments even if one fails

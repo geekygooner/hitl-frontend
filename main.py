@@ -24,7 +24,7 @@ headers = {
 }
 
 
-document_path = "/Users/kiraningale/Documents/Code/hitl-frontend/sample_project.docx"
+document_path = "/Users/kiraningale/Documents/Code/hitl-frontend/sample_project 2.docx"
 # Define policies for compliance checking
 policies = {
     "Policy 1": "Projects must have stakeholder approval documented.",

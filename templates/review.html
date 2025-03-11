@@ -63,7 +63,20 @@
                                 </span>
                                 <a href="#" class="view-in-doc" data-highlight="{{ result['Highlighted Text'] }}">View in document</a>
                             </p>
-                            <p>Explanation: {{ result.Explanation }}</p>
+                            <div class="explanation-container">
+                                <div id="explanation-text-{{ i }}" class="explanation-text">
+                                    <p>Explanation: {{ result.Explanation }}</p>
+                                </div>
+                                <div id="explanation-edit-{{ i }}" class="input-field explanation-edit" style="display: none;">
+                                    <textarea id="explanation-textarea-{{ i }}" name="explanation_{{ i }}" class="materialize-textarea">{{ result.Explanation }}</textarea>
+                                    <label for="explanation-textarea-{{ i }}">Edit Explanation</label>
+                                </div>
+                                <!-- Hidden input to always store the current explanation value -->
+                                <input type="hidden" id="explanation-final-{{ i }}" name="explanation_{{ i }}" value="{{ result.Explanation }}">
+                                <button type="button" class="btn-small waves-effect waves-light explanation-edit-btn" data-index="{{ i }}">
+                                    Edit Explanation
+                                </button>
+                            </div>
                             <div class="input-field">
                                 <select name="answer_{{ i }}" required>
                                     <option value="" disabled selected>Choose your answer</option>
@@ -182,6 +195,41 @@
                     alert('The highlighted text could not be found in the document. This may happen if the text contains special formatting or if the AI model paraphrased the text.');
                 }
             }
+            
+            // Handle explanation edit buttons
+            document.querySelectorAll('.explanation-edit-btn').forEach(function(button) {
+                button.addEventListener('click', function() {
+                    const index = this.getAttribute('data-index');
+                    const textDiv = document.getElementById(`explanation-text-${index}`);
+                    const editDiv = document.getElementById(`explanation-edit-${index}`);
+                    
+                    if (editDiv.style.display === 'none') {
+                        // Switch to edit mode
+                        textDiv.style.display = 'none';
+                        editDiv.style.display = 'block';
+                        this.textContent = 'Save Explanation';
+                        
+                        // Focus on the textarea
+                        document.getElementById(`explanation-textarea-${index}`).focus();
+                    } else {
+                        // Switch back to display mode
+                        const textarea = document.getElementById(`explanation-textarea-${index}`);
+                        const newExplanation = textarea.value;
+                        
+                        // Update the displayed text
+                        const textElement = textDiv.querySelector('p');
+                        textElement.textContent = 'Explanation: ' + newExplanation;
+                        
+                        // Update the hidden input with the new explanation value
+                        document.getElementById(`explanation-final-${index}`).value = newExplanation;
+                        
+                        // Toggle visibility
+                        textDiv.style.display = 'block';
+                        editDiv.style.display = 'none';
+                        this.textContent = 'Edit Explanation';
+                    }
+                });
+            });
         });
     </script>
 </body>
